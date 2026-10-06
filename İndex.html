@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>İyi ki Doğdun Zeynep!</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(160deg, #ffd1e8, #c9b6ff 55%, #a8e6ff);
+    color: #3b2a5a;
+    overflow-x: hidden;
+    text-align: center;
+  }
+  canvas#confetti { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+  .hero { padding: 48px 20px 20px; position: relative; z-index: 2; }
+  h1 {
+    font-size: clamp(2.2rem, 8vw, 4.5rem);
+    background: linear-gradient(90deg, #ff4f9a, #8a5cff, #19a7ff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: pop 1s ease-out;
+  }
+  .sub { margin-top: 10px; font-size: 1.15rem; opacity: .85; }
+  @keyframes pop { 0% { transform: scale(.3); opacity: 0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+
+  /* Pasta */
+  .cake-wrap { margin: 30px auto 10px; width: 240px; position: relative; z-index: 2; }
+  .candles { display: flex; justify-content: center; gap: 28px; height: 70px; align-items: flex-end; }
+  .candle { width: 10px; height: 42px; background: repeating-linear-gradient(45deg,#fff,#fff 6px,#ff7ab8 6px,#ff7ab8 12px); border-radius: 3px; position: relative; }
+  .flame {
+    position: absolute; top: -22px; left: -3px; width: 16px; height: 22px;
+    background: radial-gradient(circle at 50% 70%, #fff6a8, #ffb300 60%, #ff6a00);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    animation: flicker .15s infinite alternate; transition: opacity .4s, transform .4s;
+    box-shadow: 0 0 14px 4px rgba(255,190,0,.6);
+  }
+  .out .flame { opacity: 0; transform: scale(.2); }
+  @keyframes flicker { from { transform: rotate(-4deg) scaleY(1); } to { transform: rotate(4deg) scaleY(1.1); } }
+  .layer { height: 52px; border-radius: 14px; margin-top: -2px; }
+  .l1 { width: 150px; margin-inline: auto; background: #ff9ccc; box-shadow: inset 0 -10px 0 #ff6fb3; }
+  .l2 { width: 200px; margin-inline: auto; background: #ffd27a; box-shadow: inset 0 -10px 0 #ffb73d; }
+  .l3 { width: 240px; background: #b99bff; box-shadow: inset 0 -10px 0 #946bff; }
+  button {
+    margin-top: 18px; padding: 12px 26px; border: 0; border-radius: 999px; cursor: pointer;
+    font-size: 1.05rem; font-weight: 600; color: #fff;
+    background: linear-gradient(90deg, #ff4f9a, #8a5cff);
+    box-shadow: 0 6px 18px rgba(138,92,255,.4); transition: transform .15s;
+  }
+  button:hover { transform: translateY(-2px) scale(1.04); }
+  #wishMsg { min-height: 28px; margin-top: 14px; font-weight: 600; font-size: 1.1rem; }
+
+  /* Dilekler */
+  .cards { display: grid; gap: 16px; max-width: 900px; margin: 40px auto 20px; padding: 0 20px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); position: relative; z-index: 2; }
+  .card { background: rgba(255,255,255,.7); backdrop-filter: blur(6px); padding: 22px; border-radius: 20px; box-shadow: 0 8px 24px rgba(80,40,140,.15); transition: transform .25s; }
+  .card:hover { transform: translateY(-6px) rotate(-1deg); }
+  .card .emo { font-size: 2.2rem; }
+  .card h3 { margin: 8px 0 6px; }
+
+  footer { padding: 30px 20px 50px; position: relative; z-index: 2; font-size: 1.1rem; }
+
+  /* Balonlar */
+  .balloon { position: fixed; bottom: -120px; width: 52px; height: 66px; border-radius: 50% 50% 48% 48%; z-index: 1; animation: rise linear forwards; opacity: .85; }
+  .balloon::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: 40px; background: rgba(0,0,0,.25); }
+  @keyframes rise { to { transform: translateY(-120vh) translateX(var(--dx)); } }
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<section class="hero">
+  <h1>İyi ki Doğdun Zeynep! 🎉</h1>
+  <p class="sub">Yeni yaşın sana sağlık, mutluluk ve bol gülümseme getirsin 💖</p>
+</section>
+
+<section class="cake-wrap" id="cake">
+  <div class="candles">
+    <div class="candle"><div class="flame"></div></div>
+    <div class="candle"><div class="flame"></div></div>
+    <div class="candle"><div class="flame"></div></div>
+  </div>
+  <div class="layer l1"></div>
+  <div class="layer l2"></div>
+  <div class="layer l3"></div>
+</section>
+
+<button id="blowBtn">🕯️ Mumları Üfle</button>
+<p id="wishMsg">Önce bir dilek tut… ✨</p>
+
+<footer>
+  <button id="partyBtn">🎊 Konfeti Patlat</button>
+</footer>
+
+<script>
+/* Konfeti */
+const cv = document.getElementById('confetti'), ctx = cv.getContext('2d');
+let W, H, pieces = [];
+function resize(){ W = cv.width = innerWidth; H = cv.height = innerHeight; }
+addEventListener('resize', resize); resize();
+const colors = ['#ff4f9a','#8a5cff','#19a7ff','#ffd23f','#3ddc97','#ff8a3d'];
+function burst(n = 140){
+  for (let i = 0; i < n; i++) pieces.push({
+    x: W/2, y: H/3, vx: (Math.random()-.5)*14, vy: Math.random()*-12-2,
+    s: Math.random()*8+4, c: colors[Math.random()*colors.length|0],
+    r: Math.random()*6, vr: (Math.random()-.5)*.4, life: 0
+  });
+}
+function rain(n = 80){
+  for (let i = 0; i < n; i++) pieces.push({
+    x: Math.random()*W, y: -20, vx: (Math.random()-.5)*2, vy: Math.random()*3+2,
+    s: Math.random()*8+4, c: colors[Math.random()*colors.length|0],
+    r: Math.random()*6, vr: (Math.random()-.5)*.3, life: 0
+  });
+}
+(function loop(){
+  ctx.clearRect(0,0,W,H);
+  pieces.forEach(p => {
+    p.vy += .25; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life++;
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r);
+    ctx.fillStyle = p.c; ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2); ctx.restore();
+  });
+  pieces = pieces.filter(p => p.y < H + 30);
+  requestAnimationFrame(loop);
+})();
+
+/* Balonlar */
+function balloon(){
+  const b = document.createElement('div');
+  b.className = 'balloon';
+  b.style.left = Math.random()*95 + 'vw';
+  b.style.background = colors[Math.random()*colors.length|0];
+  b.style.setProperty('--dx', (Math.random()*80-40) + 'px');
+  b.style.animationDuration = (8 + Math.random()*6) + 's';
+  document.body.appendChild(b);
+  setTimeout(() => b.remove(), 15000);
+}
+setInterval(balloon, 900);
+
+/* Mumlar */
+const cake = document.getElementById('cake'), msg = document.getElementById('wishMsg'), blow = document.getElementById('blowBtn');
+let out = false;
+blow.onclick = () => {
+  out = !out;
+  cake.classList.toggle('out', out);
+  blow.textContent = out ? '🔥 Mumları Tekrar Yak' : '🕯️ Mumları Üfle';
+  msg.textContent = out ? 'Dileğin kabul olsun Zeynep! 🌟' : 'Önce bir dilek tut… ✨';
+  if (out) { burst(); setTimeout(() => rain(120), 300); }
+};
+document.getElementById('partyBtn').onclick = () => { burst(200); rain(100); };
+
+/* Açılışta konfeti */
+setTimeout(() => { burst(); rain(60); }, 500);
+</script>
+</body>
+</html>
